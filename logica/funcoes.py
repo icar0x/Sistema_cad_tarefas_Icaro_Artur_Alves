@@ -1,174 +1,96 @@
 import json
-from pathlib import Path
-
-# Caminho absoluto para o arquivo JSON (garante que funciona de qualquer cwd)
-BASE_DIR = Path(__file__).resolve().parent.parent
-DADOS_DIR = BASE_DIR / "dados"
-CAMINHO_ARQUIVO = DADOS_DIR / "tarefas.json"
+import os
 
 
-def _garantir_estrutura():
-    """Cria pasta 'dados' e arquivo JSON se não existirem."""
-    DADOS_DIR.mkdir(parents=True, exist_ok=True)
-    if not CAMINHO_ARQUIVO.exists():
-        CAMINHO_ARQUIVO.write_text("[]", encoding="utf-8")
-
-
-def carregar_tarefas():
-    """Carrega e retorna a lista de tarefas do JSON (lista de dicionários)."""
-    _garantir_estrutura()
+def carregar_tarefas(caminho="../dados/tarefas.json"):
+    """Carrega tarefas do JSON."""
     try:
-        data = json.loads(CAMINHO_ARQUIVO.read_text(encoding="utf-8"))
-        if isinstance(data, list):
-            return data
-        else:
-            # se o JSON não for lista, corrige
-            return []
-    except json.JSONDecodeError:
-        # arquivo corrompido -> reescreve como lista vazia e retorna []
-        CAMINHO_ARQUIVO.write_text("[]", encoding="utf-8")
+        if not os.path.exists(caminho):
+            with open(caminho, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=4)
+
+        with open(caminho, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    except Exception:
+        print("Erro ao carregar o arquivo de tarefas.")
         return []
 
 
-def salvar_tarefas(tarefas):
-    # Salva a lista de tarefas no JSON
-    _garantir_estrutura()
-    CAMINHO_ARQUIVO.write_text(json.dumps(
-        tarefas, indent=4, ensure_ascii=False), encoding="utf-8")
+def salvar_tarefas(tarefas, caminho="../dados/tarefas.json"):
+    """Salva tarefas no JSON."""
+    try:
+        with open(caminho, "w", encoding="utf-8") as f:
+            json.dump(tarefas, f, indent=4)
+    except Exception:
+        print("Erro ao salvar as tarefas.")
 
 
-# funções
-def cadastrar_tarefa(tarefas):
-    # Cria uma nova tarefa
-    print("\n--- Cadastrar Tarefa ---")
-    descricao = input("Descrição: ").strip()
-    if descricao == "":
-        print("Descrição não pode ser vazia.")
-        return
+def criar_tarefa(tarefas, titulo, descricao):
+    """Cria uma nova tarefa """
+    try:
+        if not titulo.strip():
+            print("Título não pode estar vazio!")
+            return tarefas
 
-    status = input("Status (Pendente / Concluída): ").strip()
-    prazo = input("Prazo (AAAA-MM-DD): ").strip()
+        nova = {
+            "id": len(tarefas) + 1,
+            "titulo": titulo,
+            "descricao": descricao if descricao.strip() else "Sem descrição",
+            "status": "pendente"
+        }
 
-    # gera ID: 1 + maior id atual (ou 1 se lista vazia)
-    novo_id = 1
-    if tarefas:
-        try:
-            max_id = max(t.get("id", 0) for t in tarefas)
-            novo_id = max_id + 1
-        except Exception:
-            novo_id = len(tarefas) + 1
+        tarefas.append(nova)
+        return tarefas
 
-    nova = {
-        "id": novo_id,
-        "descricao": descricao,
-        "status": status,
-        "prazo": prazo
-    }
-    tarefas.append(nova)
-    salvar_tarefas(tarefas)
-    print("✔ Tarefa cadastrada com sucesso.")
+    except Exception:
+        print("Erro ao criar a tarefa.")
+        return tarefas
 
 
 def listar_tarefas(tarefas):
-
-    print("\n--- Lista de Tarefas ---")
-    if not tarefas:
-        print("Nenhuma tarefa cadastrada.")
-        return
-    for t in tarefas:
-        print(f"\nID: {t.get('id')}")
-        print(f"Descrição: {t.get('descricao')}")
-        print(f"Status: {t.get('status')}")
-        print(f"Prazo: {t.get('prazo')}")
-    print()
-
-
-def atualizar_tarefa(tarefas):
-    # Atualiza uma tarefa escolhida pelo ID.
-    print("\n--- Atualizar Tarefa ---")
-    if not tarefas:
-        print("Nenhuma tarefa para atualizar.")
-        return
-
-    listar_tarefas(tarefas)
+    """Lista todas as tarefas."""
     try:
-        tarefa_id = int(
-            input("Digite o ID da tarefa que deseja atualizar: ").strip())
-    except ValueError:
-        print("ID inválido.")
-        return
-
-    # encontrar por id
-    for t in tarefas:
-        if t.get("id") == tarefa_id:
-            print("Deixe em branco para manter o valor atual.")
-            nova_desc = input(
-                f"Nova descrição [{t.get('descricao')}]: ").strip()
-            novo_status = input(f"Novo status [{t.get('status')}]: ").strip()
-            novo_prazo = input(f"Novo prazo [{t.get('prazo')}]: ").strip()
-
-            if nova_desc != "":
-                t["descricao"] = nova_desc
-            if novo_status != "":
-                t["status"] = novo_status
-            if novo_prazo != "":
-                t["prazo"] = novo_prazo
-
-            salvar_tarefas(tarefas)
-            print("✔ Tarefa atualizada.")
+        if not tarefas:
+            print("Nenhuma tarefa cadastrada.")
             return
 
-    print("Tarefa não encontrada.")
+        for t in tarefas:
+            print(f"ID: {t['id']} | {t['titulo']} | {t['status']}")
+    except Exception:
+        print("Erro ao listar tarefas.")
 
 
-def remover_tarefa(tarefas):
-    # Remove tarefa por ID
-    print("\n--- Remover Tarefa ---")
-    if not tarefas:
-        print("Nenhuma tarefa para remover.")
-        return
-
-    listar_tarefas(tarefas)
+def atualizar_tarefa(tarefas, id_tarefa, novo_titulo, nova_descricao):
+    """Atualiza título e descrição."""
     try:
-        tarefa_id = int(
-            input("Digite o ID da tarefa que deseja remover: ").strip())
-    except ValueError:
-        print("ID inválido.")
-        return
+        for t in tarefas:
+            if t["id"] == id_tarefa:
+                if novo_titulo.strip():
+                    t["titulo"] = novo_titulo
+                else:
+                    print("Título não pode ser vazio!")
+                    return False
 
-    # verifica existência
-    existe = any(t.get("id") == tarefa_id for t in tarefas)
-    if not existe:
-        print("Tarefa não encontrada.")
-        return
+                t["descricao"] = nova_descricao if nova_descricao.strip(
+                ) else "Sem descrição"
+                return True
+        return False
 
-    confirma = input("Confirma remoção? (s/N): ").strip().lower()
-    if confirma != "s":
-        print("Remoção cancelada.")
-        return
-
-    nova_lista = [t for t in tarefas if t.get("id") != tarefa_id]
-    # reatribui ids numéricos a partir de 1
-    for i, t in enumerate(nova_lista, start=1):
-        t["id"] = i
-
-    # substitui conteúdo da lista original
-    tarefas.clear()
-    tarefas.extend(nova_lista)
-
-    salvar_tarefas(tarefas)
-    print(" Tarefa removida.")
+    except Exception:
+        print("Erro ao atualizar a tarefa.")
+        return False
 
 
-def gerar_relatorio(tarefas):
-    # Imprime relatório simples
-    total = len(tarefas)
-    pendentes = sum(1 for t in tarefas if str(
-        t.get("status", "")).lower() == "pendente")
-    concluidas = sum(1 for t in tarefas if str(t.get("status", "")).lower() in (
-        "concluída", "concluida", "feito", "concluído"))
+def excluir_tarefa(tarefas, id_tarefa):
+    """Exclui uma tarefa pelo ID."""
+    try:
+        for t in tarefas:
+            if t["id"] == id_tarefa:
+                tarefas.remove(t)
+                return True
+        return False
 
-    print("\n--- Relatório ---")
-    print(f"Total de tarefas: {total}")
-    print(f"Tarefas pendentes: {pendentes}")
-    print(f"Tarefas concluídas: {concluidas}")
+    except Exception:
+        print("Erro ao excluir a tarefa.")
+        return False
