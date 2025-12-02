@@ -3,13 +3,6 @@
 Este é um sistema simples de CRUD de produtos feito em Python, utilizando armazenamento em JSON e totalmente baseado no terminal.
 O objetivo é permitir o cadastro, listagem, atualização e exclusão de produtos de maneira prática e organizada.
 
-📂 Estrutura do Projeto
-projeto_crud/
-│── main.py
-│── funcoes.py
-│── __init__.py
-│── produtos.json
-│── README.md
 
 ⚙️ Funcionalidades
 📝 1 - Cadastrar Produto
