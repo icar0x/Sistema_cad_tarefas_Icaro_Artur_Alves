@@ -1,85 +1,58 @@
 from funcoes import (
-    carregar_tarefas,
-    salvar_tarefas,
-    criar_tarefa,
-    listar_tarefas,
-    atualizar_tarefa,
-    excluir_tarefa
+    carregar_produtos,
+    salvar_produtos,
+    cadastrar_produto,
+    listar_produtos,
+    atualizar_produto,
+    excluir_produto
 )
 
 
 def menu():
-    print("\n========== SISTEMA CRUD ==========")
-    print("1 - Criar tarefa")
-    print("2 - Listar tarefas")
-    print("3 - Atualizar tarefa")
-    print("4 - Excluir tarefa")
-    print("5 - Sair")
-    print("==================================")
+    print("\n====== SISTEMA DE PRODUTOS ======")
+    print("1 - Cadastrar produto")
+    print("2 - Listar produtos")
+    print("3 - Atualizar produto")
+    print("4 - Excluir produto")
+    print("0 - Sair")
+    print("=================================")
 
 
 def main():
-    tarefas = carregar_tarefas()
+    categorias = ("Comida", "Limpeza", "Bebidas", "Higiene", "Cosméticos")
+    produtos = carregar_produtos()
+    codigo_cad = {p["codigo"] for p in produtos}
 
     while True:
         menu()
 
         try:
-            opcao = int(input("Escolha uma opção: "))
+            opcao = int(input("Escolha: "))
         except Exception:
-            print("Digite apenas números.")
+            print(" Opção inválida.")
             continue
 
-        # Criar
         if opcao == 1:
-            titulo = input("Título: ")
-            descricao = input("Descrição: ")
+            produtos = cadastrar_produto(produtos, codigo_cad, categorias)
+            salvar_produtos(produtos)
 
-            tarefas = criar_tarefa(tarefas, titulo, descricao)
-            salvar_tarefas(tarefas)
-
-        # Listar
         elif opcao == 2:
-            listar_tarefas(tarefas)
+            listar_produtos(produtos)
 
-        # Atualizar
         elif opcao == 3:
-            try:
-                id_tarefa = int(input("ID da tarefa: "))
-            except Exception:
-                print("ID inválido.")
-                continue
+            produtos = atualizar_produto(produtos)
+            salvar_produtos(produtos)
 
-            novo_titulo = input("Novo título: ")
-            nova_desc = input("Nova descrição: ")
-
-            if atualizar_tarefa(tarefas, id_tarefa, novo_titulo, nova_desc):
-                salvar_tarefas(tarefas)
-                print("Tarefa atualizada!")
-            else:
-                print("Tarefa não encontrada ou título inválido.")
-
-        # Excluir
         elif opcao == 4:
-            try:
-                id_tarefa = int(input("ID da tarefa: "))
-            except Exception:
-                print("ID inválido.")
-                continue
+            produtos = excluir_produto(produtos, codigo_cad)
+            salvar_produtos(produtos)
 
-            if excluir_tarefa(tarefas, id_tarefa):
-                salvar_tarefas(tarefas)
-                print("Tarefa excluída!")
-            else:
-                print("Tarefa não encontrada.")
-
-        # Sair
-        elif opcao == 5:
-            print("Saindo...")
+        elif opcao == 0:
+            print("Saindo do sistema... Obrigado!")
             break
 
         else:
-            print("Opção inválida.")
+            print(" Opção inválida.")
 
 
 if __name__ == "__main__":
